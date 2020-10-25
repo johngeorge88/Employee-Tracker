@@ -1,0 +1,24 @@
+{
+  "name": "Employee-Tracker",
+  "version": "1.0.0",
+  "description": "a command-line application to manage a company's employee database",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johngeorge88/Employee-Tracker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/johngeorge88/Employee-Tracker/issues"
+  },
+  "homepage": "https://github.com/johngeorge88/Employee-Tracker#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mysql2": "^2.2.5"
+  }
+}
