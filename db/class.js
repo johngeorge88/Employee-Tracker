@@ -1,4 +1,3 @@
-const { up } = require("inquirer/lib/utils/readline");
 const connection = require("./database");
 
 class DB {
@@ -7,7 +6,8 @@ class DB {
     }
 
     viewDepartment() {
-        return this.connection.promise().query("SELECT * FROM department");
+        return this.connection.promise().query(`SELECT d.id AS 'department_id', d.name
+        FROM department AS d`);
     }
 
     viewEmployees() {
@@ -44,6 +44,15 @@ class DB {
         return this.connection.promise().query("INSERT into role SET ?", role);
     }
 
+    roleQuery() {
+        return this.connection.promise().query(`SELECT role.id, role.title 
+                                                    FROM role`)
+    }
+
+    getManager() {
+        return this.connection.promise().query(`SELECT * FROM employees`)
+    }
+
     updateRole(update) {
         return this.connection
             .promise()
@@ -52,6 +61,10 @@ class DB {
                 [update.role_id, update.first_name, update.last_name]
             );
     }
+
+    fullNameQuery() {
+        return this.connection.promise().query(`SELECT * FROM employees`)
+      }
 }
 
 module.exports = new DB(connection);

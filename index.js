@@ -1,9 +1,7 @@
-const fs = require("fs");
 const inquirer = require("inquirer");
 
 const cTable = require("console.table");
 const db = require("./db/class");
-const { connection } = require("./db/class");
 
 // Main menu prompt
 const menuPrompt = function () {
@@ -20,6 +18,7 @@ const menuPrompt = function () {
                 "Add a role",
                 "Add an Employee",
                 "Update employee role",
+                "Exit"
             ],
         },
     ];
@@ -46,6 +45,8 @@ const menuPrompt = function () {
             case "Update employee role":
                 updateRole();
                 break;
+            case "Exit":
+                quitApp();
             default:
                 console.log("Please make a choice");
         }
@@ -75,50 +76,48 @@ const viewRoles = () => {
     });
 };
 
-const addEmployee = () => {
-    inquirer
-        .prompt([
-            {
-                type: "input",
-                name: "first_name",
-                message: "Please enter first name.",
-                validate: (nameInput) => {
-                    if (nameInput) {
-                        return true;
-                    } else {
-                        console.log("Please enter your name!");
-                        return false;
-                    }
-                },
-            },
-            {
-                type: "input",
-                name: "last_name",
-                message: "Please enter last name.",
-            },
-            {
-                type: "input",
-                name: "role_id",
-                message: "Please enter role ID.",
-            },
-            {
-                type: "input",
-                name: "manager_id",
-                message: "Please enter manager ID.",
-            },
-        ])
-        .then((res) => {
-            db.addEmployee({
-                first_name: res.first_name,
-                last_name: res.last_name,
-                role_id: res.role_id,
-                manager_id: res.manager_id,
-            });
-            console.log("Employee was successfully added");
+const addEmployee = function () {
+    db.roleQuery().then(([rows]) => {
+        const roles = rows.map(({ id, title }) => ({ name: title, value: id }))
 
-            menuPrompt();
-        });
-};
+        db.getManager().then(([rows]) => {
+            const manager = rows.map(({ id, first_name, last_name }) => ({ name: first_name + "   " + last_name, value: id }));
+
+
+            inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'first_name',
+                    message: 'Enter the first name of the employee',
+                },
+                {
+                    type: 'input',
+                    name: 'last_name',
+                    message: 'Enter the last name of the employee',
+                },
+                {
+                    type: 'list',
+                    name: 'role_id',
+                    message: 'choose a role for the employee',
+                    choices: roles
+                },
+                {
+                    type: 'list',
+                    name: 'manager_id',
+                    message: 'choose a manager for the employee',
+                    choices: manager
+                },
+            ]).then((res) => {
+                db.addEmployee(res)
+                    .then(() => {
+                        console.log(`\nNew employee ${res.first_name}" "${res.last_name}" " successfully added!\n`)
+
+                        menuPrompt()
+                    })
+            })
+        })
+    })
+}
 
 const addDepartment = () => {
     inquirer
@@ -147,8 +146,10 @@ const addDepartment = () => {
 };
 
 const addRole = () => {
-    inquirer
-        .prompt([
+    db.viewDepartment().then(([rows]) => {
+        const department = rows.map(({ department_id, name }) => ({ name: name, value: department_id }))
+
+        inquirer.prompt([
             {
                 type: "input",
                 name: "title",
@@ -160,50 +161,56 @@ const addRole = () => {
                 message: "What is the salary of the role you would like to add?",
             },
             {
-                type: "input",
-                name: "department",
-                message:
-                    "What is the  department id of the role you would like to add?",
+                type: 'list',
+                name: 'department_id',
+                message: 'Choose a department for this role',
+                choices: department
             },
         ])
-        .then((res) => {
-            db.addRole({
-                title: res.title,
-                salary: res.salary,
-                department_id: res.department,
-            });
-            console.log("Role was added successfully");
-            menuPrompt();
-        });
-};
+            .then((res) => {
+                db.addRole(res)
+                    .then(() => {
+                        console.log(`\nNew role ${res.title} successfully added!\n`)
+                        menuPrompt()
+                    })
+            })
+    })
+}
 
-const updateRole = () => {
-    inquirer
-        .prompt([
-            {
-                type: "list",
-                name: "role_id",
-                message: "Please select the new role ID for your employee",
-                choices: ["1", "2", "3"],
-            },
-            {
-                type: "input",
-                name: "first_name",
-                message: "Please enter employee's first name",
-            },
-            {
-                type: "input",
-                name: "last_name",
-                message: "Please enter employee's last name",
-            },
-        ])
-        .then((res) => {
-            db.updateRole({
-                role_id: res.role_id,
-                first_name: res.first_name,
-                last_name: res.last_name,
-            });
-            console.log("Role was successfully updated");
-            menuPrompt();
-        });
-};
+const updateRole = function () {
+    db.roleQuery().then(([rows]) => {
+      const roles = rows.map(({ id, title }) => ({ name: title, value: id }))
+  
+      db.fullNameQuery().then(([rows]) => {
+        const NameList = rows.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
+  
+        inquirer.prompt([
+          {
+            type: 'list',
+            name: 'EmpNameRoleUpdate',
+            message: 'Which employee would you like to update?',
+            choices: NameList
+          },
+          {
+            type: 'list',
+            name: 'roleUpdate',
+            message: "Choose the role ID to assign to employee",
+            choices: roles
+          },
+  
+  
+        ]).then((res) => {
+          db.updateRole(res)
+            .then(() => {
+              console.log(`\nNew role successfully added!\n`)
+  
+              menuPrompt()
+            })
+        })
+      });
+    })
+  }
+
+const quitApp = function () {
+    process.exit()
+}
